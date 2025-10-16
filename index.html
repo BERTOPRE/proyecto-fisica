@@ -2,101 +2,43 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mapa de Campo Magnético</title>
+<title>Medidor de Campo Magnético - S24 Ultra</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #eef4ff;
-    color: #111;
-    text-align: center;
-    padding: 20px;
-  }
-  h1 { color: #0a3c91; }
-  #valor { font-size: 2em; margin: 10px; color: #d43f00; }
-  button {
-    background: #0a3c91;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1em;
-    cursor: pointer;
-  }
-  button:hover { background: #092e70; }
-  canvas {
-    margin-top: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  }
+  body { font-family: Arial; background: #eef4ff; color: #111; text-align: center; padding: 20px; }
+  h1 { color: #003366; }
+  #datos { margin-top: 20px; font-size: 1.2em; }
+  .valor { font-weight: bold; color: #d43f00; }
 </style>
 </head>
 <body>
 
-<h1>🧭 Mapa de Campo Magnético</h1>
-<p>Mueve el teléfono cerca de objetos metálicos o imanes y observa cómo cambia el campo.</p>
+<h1>🧭 Magnetómetro - Galaxy S24 Ultra</h1>
+<p>Permite medir el campo magnético en 3 ejes (µT).</p>
 
-<div id="valor">Esperando sensor...</div>
-<button id="registrar">Registrar medición</button>
-
-<canvas id="grafico" width="350" height="200"></canvas>
+<div id="datos">
+  Bx: <span class="valor" id="bx">0</span> µT<br>
+  By: <span class="valor" id="by">0</span> µT<br>
+  Bz: <span class="valor" id="bz">0</span> µT<br>
+  Magnitud total: <span class="valor" id="btotal">0</span> µT
+</div>
 
 <script>
-const valorCampo = document.getElementById("valor");
-const btnRegistrar = document.getElementById("registrar");
-const canvas = document.getElementById("grafico");
-const ctx = canvas.getContext("2d");
-
-let lecturas = [];
-
 if ('Magnetometer' in window) {
-  try {
-    const sensor = new Magnetometer({frequency: 10});
-    sensor.addEventListener('reading', () => {
-      const Bx = sensor.x;
-      const By = sensor.y;
-      const Bz = sensor.z;
-      const B = Math.sqrt(Bx*Bx + By*By + Bz*Bz);
-      valorCampo.textContent = `${B.toFixed(2)} µT`;
-      window.valorActual = B;
-    });
-    sensor.start();
-  } catch (error) {
-    valorCampo.textContent = "Sensor no disponible o permisos denegados.";
-  }
+  const sensor = new Magnetometer({frequency: 10});
+  sensor.addEventListener('reading', () => {
+    const bx = sensor.x.toFixed(2);
+    const by = sensor.y.toFixed(2);
+    const bz = sensor.z.toFixed(2);
+    const btotal = Math.sqrt(sensor.x**2 + sensor.y**2 + sensor.z**2).toFixed(2);
+
+    document.getElementById('bx').textContent = bx;
+    document.getElementById('by').textContent = by;
+    document.getElementById('bz').textContent = bz;
+    document.getElementById('btotal').textContent = btotal;
+  });
+  sensor.start();
 } else {
-  valorCampo.textContent = "Tu navegador no soporta Magnetometer API.";
-}
-
-btnRegistrar.addEventListener("click", () => {
-  if (window.valorActual) {
-    lecturas.push(window.valorActual);
-    dibujarGrafico();
-  }
-});
-
-function dibujarGrafico() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.beginPath();
-  ctx.moveTo(20, 180);
-  ctx.lineTo(330, 180);
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  if (lecturas.length > 0) {
-    const max = Math.max(...lecturas);
-    ctx.beginPath();
-    lecturas.forEach((val, i) => {
-      const x = 20 + i * (310 / Math.max(lecturas.length - 1, 1));
-      const y = 180 - (val / max) * 160;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.strokeStyle = "#0a3c91";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
+  document.body.innerHTML = "<h2>⚠️ Tu navegador no permite acceder al magnetómetro.</h2>";
 }
 </script>
 
